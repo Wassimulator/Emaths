@@ -372,24 +372,3 @@ static bool operator==(v2 A, v2 B)
 {
     return A.x == B.x && A.y == B.y;
 }
-
-// POINT rotate_point(v2 around, float angle, POINT p)
-// {
-//     float cx = around.x;
-//     float cy = around.y;
-//     float s = sin(angle);
-//     float c = cos(angle);
-
-//     // translate point back to origin:
-//     p.x -= cx;
-//     p.y -= cy;
-
-//     // rotate point
-//     float xnew = p.x * c - p.y * s;
-//     float ynew = p.x * s + p.y * c;
-
-//     // translate point back:
-//     p.x = xnew + cx;
-//     p.y = ynew + cy;
-//     return p;
-// }
