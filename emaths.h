@@ -1,17 +1,40 @@
 /*
     Emaths - Essential Maths library
 
-    includes most 2D geometry related math functions
+    includes simple 2D geometry related math functions in C/C++
     Work in progress, more functions will be added as needed
+
+    Make your life easier by using namespace Emaths
 
     by Wassimulator
 */
-
 #pragma once
 #include <stdio.h>
-#include <iostream>
 
-float clamp(float input, float min, float max)
+namespace Emaths
+{
+    float clamp(float input, float min, float max);
+    int rand_range(int min, int max);
+    uint64_t rand_XOR();
+    inline double random_double();
+    inline double random_double(double min, double max);
+    struct v2;
+    struct RandState;
+    float v2_distance_2Points(v2 A, v2 B);
+    v2 unitvec_AtoB(v2 A, v2 B);
+    float signed_angle_v2(v2 A, v2 B);
+    v2 Rotate2D(v2 P, float sine, float cosine);
+    v2 Rotate2D(v2 P, float Angle);
+    v2 Rotate2D(v2 p, v2 o, float angle);
+    v2 Reflection2D(v2 P, v2 N);
+    bool PointInRectangle(v2 P, v2 A, v2 B, v2 C);
+    int sign(float x);
+    static float dot(v2 A, v2 B);
+    static float perpdot(v2 A, v2 B);
+    static bool operator==(v2 A, v2 B);
+}
+
+float Emaths::clamp(float input, float min, float max)
 {
     if (input < min)
         return min;
@@ -20,22 +43,46 @@ float clamp(float input, float min, float max)
     else
         return input;
 }
-int rand_range(int min, int max)
+
+struct Emaths::RandState
 {
-    return min + rand() / (RAND_MAX / (max - min + 1) + 1);
+    uint64_t seed;
+    bool initialized = false;
+};
+Emaths::RandState RANDSTATE;
+
+uint64_t Emaths::rand_XOR()
+{
+    if (!RANDSTATE.initialized)
+    {
+        RANDSTATE.seed = time(NULL);
+        RANDSTATE.initialized = true;
+    }
+    uint64_t x = RANDSTATE.seed;
+    x ^= x << 9;
+    x ^= x >> 5;
+    x ^= x << 15;
+    return RANDSTATE.seed = x;
 }
-inline double random_double()
+int Emaths::rand_range(int min, int max)
+{
+    // return min + rand() / (RAND_MAX / (max - min + 1) + 1);
+    return min + Emaths::rand_XOR() % (max - min + 1);
+    // return (float)rand()/ RAND_MAX * (max - min + 1) + min;
+}
+
+inline double Emaths::random_double()
 {
     // Returns a random real in [0,1).
     return rand() / (RAND_MAX + 1.0);
 }
 
-inline double random_double(double min, double max)
+inline double Emaths::random_double(double min, double max)
 {
     // Returns a random real in [min,max).
     return min + (max - min) * random_double();
 }
-struct v2
+struct Emaths::v2
 {
     union
     {
@@ -49,31 +96,31 @@ struct v2
     v2() : e{0, 0} {}
     v2(float e0, float e1) : e{e0, e1} {}
 
-    v2 operator-() const { return v2(-e[0], -e[1]); }
+    Emaths::v2 operator-() const { return Emaths::v2(-e[0], -e[1]); }
     float operator[](int i) const { return e[i]; }
     float &operator[](int i) { return e[i]; }
 
-    v2 &operator+=(const v2 &v)
+    Emaths::v2 &operator+=(const Emaths::v2 &v)
     {
         e[0] += v.e[0];
         e[1] += v.e[1];
         return *this;
     }
-    v2 &operator-=(const v2 &v)
+    Emaths::v2 &operator-=(const Emaths::v2 &v)
     {
         e[0] -= v.e[0];
         e[1] -= v.e[1];
         return *this;
     }
 
-    v2 &operator*=(const float t)
+    Emaths::v2 &operator*=(const float t)
     {
         e[0] *= t;
         e[1] *= t;
         return *this;
     }
 
-    v2 &operator/=(const float t)
+    Emaths::v2 &operator/=(const float t)
     {
         return *this *= 1 / t;
     }
@@ -88,259 +135,148 @@ struct v2
         return sqrt(length_squared());
     }
 
-    v2 normalize()
+    Emaths::v2 normalize()
     {
         float lengf = length();
 
         if (lengf > 0)
-            return v2(x / lengf, y / lengf);
+            return Emaths::v2(x / lengf, y / lengf);
         else
-            return v2(0, 0);
+            return Emaths::v2(0, 0);
     }
 
-    float dot(v2 V)
+    float dot(Emaths::v2 V)
     {
         float result = x * V.x + y * V.y;
         return result;
     }
-    v2 perpendicular()
+    Emaths::v2 perpendicular()
     {
-        return v2(y, -x);
+        return Emaths::v2(y, -x);
     }
-    float perpdot(v2 V)
+    float perpdot(Emaths::v2 V)
     {
         float result = x * V.y - y * V.x;
         return result;
     }
-    float cross(v2 V)
+    float cross(Emaths::v2 V)
     {
         float result = x * V.y - y * V.x;
         return result;
     }
 
-    v2 hadamard(v2 V)
+    Emaths::v2 hadamard(Emaths::v2 V)
     {
-        v2 result(x * V.x, y * V.y);
+        Emaths::v2 result(x * V.x, y * V.y);
         return result;
     }
 
-    float angle(v2 V) // returns signed angle in radians
+    float angle(Emaths::v2 V) // returns signed angle in radians
     {
         return atan2(x * V.y - y * V.x, x * V.x + y * V.y);
     }
 };
-v2 operator-(v2 a, v2 b)
+Emaths::v2 operator-(Emaths::v2 a, Emaths::v2 b)
 {
-    v2 tojesus(a.x - b.x, a.y - b.y);
+    Emaths::v2 tojesus(a.x - b.x, a.y - b.y);
     return tojesus;
 }
 
-v2 operator+(v2 a, v2 b)
+Emaths::v2 operator+(Emaths::v2 a, Emaths::v2 b)
 {
-    v2 tojesus(a.x + b.x, a.y + b.y);
+    Emaths::v2 tojesus(a.x + b.x, a.y + b.y);
     return tojesus;
 }
-v2 operator-(v2 a, float b)
+Emaths::v2 operator-(Emaths::v2 a, float b)
 {
-    v2 tojesus(a.x - b, a.y - b);
-    return tojesus;
-}
-
-v2 operator+(v2 a, float b)
-{
-    v2 tojesus(a.x + b, a.y + b);
+    Emaths::v2 tojesus(a.x - b, a.y - b);
     return tojesus;
 }
 
-v2 operator*(v2 a, float b)
+Emaths::v2 operator+(Emaths::v2 a, float b)
 {
-    v2 tojesus(a.x * b, a.y * b);
-    return tojesus;
-}
-v2 operator*(v2 a, v2 b)
-{
-    v2 tojesus(a.x * b.x, a.y * b.y);
+    Emaths::v2 tojesus(a.x + b, a.y + b);
     return tojesus;
 }
 
-v2 operator*(float b, v2 a)
+Emaths::v2 operator*(Emaths::v2 a, float b)
 {
-    v2 tojesus(a.x * b, a.y * b);
+    Emaths::v2 tojesus(a.x * b, a.y * b);
+    return tojesus;
+}
+Emaths::v2 operator*(Emaths::v2 a, Emaths::v2 b)
+{
+    Emaths::v2 tojesus(a.x * b.x, a.y * b.y);
     return tojesus;
 }
 
-v2 operator/(v2 a, float b)
+Emaths::v2 operator*(float b, Emaths::v2 a)
 {
-    v2 tojesus(a.x / b, a.y / b);
-    return tojesus;
-}
-v2 operator/(v2 a, v2 b)
-{
-    v2 tojesus(a.x / b.x, a.y / b.y);
+    Emaths::v2 tojesus(a.x * b, a.y * b);
     return tojesus;
 }
 
-float v2_distance_2Points(v2 A, v2 B)
+Emaths::v2 operator/(Emaths::v2 a, float b)
+{
+    Emaths::v2 tojesus(a.x / b, a.y / b);
+    return tojesus;
+}
+Emaths::v2 operator/(Emaths::v2 a, Emaths::v2 b)
+{
+    Emaths::v2 tojesus(a.x / b.x, a.y / b.y);
+    return tojesus;
+}
+
+float Emaths::v2_distance_2Points(Emaths::v2 A, Emaths::v2 B)
 {
     return sqrt((A.x - B.x) * (A.x - B.x) + (A.y - B.y) * (A.y - B.y));
 }
 
-v2 unitvec_AtoB(v2 A, v2 B)
+Emaths::v2 Emaths::unitvec_AtoB(Emaths::v2 A, Emaths::v2 B)
 {
-    float n = v2_distance_2Points(A, B);
+    float n = Emaths::v2_distance_2Points(A, B);
     return ((B - A) / n);
 }
 
-float signed_angle_v2(v2 A, v2 B)
+float Emaths::signed_angle_v2(Emaths::v2 A, Emaths::v2 B)
 {
     return atan2(A.x * B.y - A.y * B.x, A.x * B.x + A.y * B.y);
 }
 
-struct v3
+Emaths::v2 Emaths::Rotate2D(Emaths::v2 P, float sine, float cosine)
 {
-    union
-    {
-        float e[3];
-        struct
-        {
-            float x, y, z;
-        };
-    };
-
-    v3() : e{0, 0, 0} {}
-    v3(float e0, float e1, float e2) : e{e0, e1, e2} {}
-
-    v3 operator-() const { return v3(-e[0], -e[1], -e[2]); }
-    float operator[](int i) const { return e[i]; }
-    float &operator[](int i) { return e[i]; }
-
-    v3 &operator+=(const v3 &v)
-    {
-        e[0] += v.e[0];
-        e[1] += v.e[1];
-        e[2] += v.e[2];
-        return *this;
-    }
-
-    v3 &operator*=(const float t)
-    {
-        e[0] *= t;
-        e[1] *= t;
-        e[2] *= t;
-        return *this;
-    }
-
-    v3 &operator/=(const float t)
-    {
-        return *this *= 1 / t;
-    }
-
-    float length_squared() const
-    {
-        return e[0] * e[0] + e[1] * e[1] + e[2] * e[2];
-    }
-
-    float length() const
-    {
-        return sqrt(length_squared());
-    }
-
-    v3 normalize()
-    {
-        float lengf = length();
-        v3 thomas(x / lengf, y / lengf, z / lengf);
-        return thomas;
-    }
-
-    float dot(v3 V)
-    {
-        float result = x * V.x + y * V.y + z * V.z;
-        return result;
-    }
-
-    v3 hadamard(v3 V)
-    {
-        v3 result(x * V.x, y * V.y, z * V.z);
-        return result;
-    }
-};
-
-v3 operator-(v3 a, v3 b)
-{
-    v3 tojesus(a.x - b.x, a.y - b.y, a.z - b.z);
-    return tojesus;
+    return Emaths::v2(Emaths::v2(cosine, -sine).dot(P), Emaths::v2(sine, cosine).dot(P));
 }
-
-v3 operator+(v3 a, v3 b)
-{
-    v3 tojesus(a.x + b.x, a.y + b.y, a.z + b.z);
-    return tojesus;
-}
-
-v3 operator*(v3 a, float b)
-{
-    v3 tojesus(a.x * b, a.y * b, a.z * b);
-    return tojesus;
-}
-
-v3 operator*(float b, v3 a)
-{
-    v3 tojesus(a.x * b, a.y * b, a.z * b);
-    return tojesus;
-}
-
-v3 operator/(v3 a, float b)
-{
-    v3 tojesus(a.x / b, a.y / b, a.z / b);
-    return tojesus;
-}
-
-// Type aliases for vec3
-using point3 = v3; // 3D point
-// using color = v3;  // RGB color
-
-v2 Rotate2D(v2 P, float sine, float cosine)
-{
-    return v2(v2(cosine, -sine).dot(P), v2(sine, cosine).dot(P));
-}
-v2 Rotate2D(v2 P, float Angle)
+Emaths::v2 Emaths::Rotate2D(Emaths::v2 P, float Angle)
 {
     float sine = sin(Angle);
     float cosine = cos(Angle);
-    return Rotate2D(P, sine, cosine);
+    return Emaths::Rotate2D(P, sine, cosine);
 }
-v2 Rotate2D(v2 p, v2 axis, float angle)
+Emaths::v2 Emaths::Rotate2D(Emaths::v2 p, Emaths::v2 o, float angle)
 {
-    // POINT rotate_point(float cx,float cy,float angle,POINT p)
+    // Demonstration: https://www.desmos.com/calculator/8aaegifsba
     float s = sin(angle);
     float c = cos(angle);
 
-    // translate point back to origin:
-    p.x -= axis.x;
-    p.y -= axis.y;
+    float x = (p.x - o.x) * c - (p.y - o.y) * s + o.x;
+    float y = (p.x - o.x) * s + (p.y - o.y) * c + o.y;
 
-    // rotate point
-    float xnew = p.x * c - p.y * s;
-    float ynew = p.x * s + p.y * c;
-
-    // translate point back:
-    p.x = xnew + axis.x;
-    p.y = ynew + axis.y;
-    return p;
+    return Emaths::v2(x, y);
 }
 
-v2 Reflection2D(v2 P, v2 N)
+Emaths::v2 Emaths::Reflection2D(Emaths::v2 P, Emaths::v2 N)
 {
     return P - 2 * N.dot(P) * N;
 }
 
-bool PointInRectangle(v2 P, v2 A, v2 B, v2 C)
+bool Emaths::PointInRectangle(Emaths::v2 P, Emaths::v2 A, Emaths::v2 B, Emaths::v2 C)
 {
-    v2 M = P;
-    v2 AB = B - A;
-    v2 BC = C - B;
-    v2 AM = M - A;
-    v2 BM = M - B;
+    Emaths::v2 M = P;
+    Emaths::v2 AB = B - A;
+    Emaths::v2 BC = C - B;
+    Emaths::v2 AM = M - A;
+    Emaths::v2 BM = M - B;
     if (0 <= AB.dot(AM) && AB.dot(AM) <= AB.dot(AB) &&
         0 <= BC.dot(BM) && BC.dot(BM) <= BC.dot(BC))
         return true;
@@ -348,7 +284,7 @@ bool PointInRectangle(v2 P, v2 A, v2 B, v2 C)
         return false;
 }
 
-int sign(float x)
+int Emaths::sign(float x)
 {
     if (x > 0)
         return 1;
@@ -358,17 +294,22 @@ int sign(float x)
         return 0;
 }
 
-static float dot(v2 A, v2 B)
+static float Emaths::dot(Emaths::v2 A, Emaths::v2 B)
 {
     return A.x * B.x + A.y * B.y;
 }
 
-static float perpdot(v2 A, v2 B)
+static float Emaths::perpdot(Emaths::v2 A, Emaths::v2 B)
 {
     return A.x * B.y - A.y * B.x;
 }
 
-static bool operator==(v2 A, v2 B)
+static bool operator==(Emaths::v2 A, Emaths::v2 B)
 {
     return A.x == B.x && A.y == B.y;
 }
+
+static float abso(float F)
+{
+    return F > 0 ? F : -F;
+};
