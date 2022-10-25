@@ -313,3 +313,8 @@ static float abso(float F)
 {
     return F > 0 ? F : -F;
 };
+
+static Emaths::v2 rand_vector(float length)
+{
+    return Emaths::v2(Emaths::rand_range(-100, 100) *0.01f *length, Emaths::rand_range(-100, 100) *0.01f *length);
+}
